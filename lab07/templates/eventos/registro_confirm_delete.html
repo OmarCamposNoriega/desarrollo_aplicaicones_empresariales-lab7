@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancelar Registro | Lab 07{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card card-custom p-4 bg-white text-center">
+            <i class="bi bi-ticket-detailed display-3 text-danger mb-3"></i>
+            <h3 class="fw-bold mb-2">¿Cancelar esta Inscripción?</h3>
+            <p class="text-muted">
+                Estás a punto de cancelar el registro del siguiente participante:
+            </p>
+            <div class="alert alert-light border p-3 my-3">
+                <h5 class="fw-bold text-dark mb-1">{{ registro.usuario.nombre }}</h5>
+                <p class="mb-1 text-primary"><strong>Evento:</strong> {{ registro.evento.titulo }}</p>
+                <small class="text-muted">Registrado el {{ registro.fecha_registro|date:"d/m/Y H:i" }}</small>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="{% url 'registro_lista' %}" class="btn btn-outline-secondary px-4">Volver</a>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">
+                        <i class="bi bi-x-circle me-1"></i> Sí, Cancelar Registro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

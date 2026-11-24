@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo de Eventos | Lab 07{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-calendar3 text-primary"></i> Catálogo de Eventos</h2>
+        <p class="text-muted mb-0">Listado interactivo con filtrado dinámico mediante <strong>Django ORM (Q Objects)</strong></p>
+    </div>
+    <div>
+        <a href="{% url 'evento_crear' %}" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Crear Nuevo Evento
+        </a>
+    </div>
+</div>
+
+<!-- Barra de Búsqueda y Filtros -->
+<div class="card card-custom p-3 mb-4 bg-white">
+    <form method="GET" class="row g-2 align-items-center">
+        <!-- Input de búsqueda con Q Objects -->
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Buscar por título, descripción o ubicación...">
+            </div>
+        </div>
+
+        <!-- Filtro Temporal -->
+        <div class="col-md-3">
+            <select name="tiempo" class="form-select">
+                <option value="">-- Todos los Eventos --</option>
+                <option value="este_mes" {% if temporalidad == 'este_mes' %}selected{% endif %}>Este Mes (fecha__month)</option>
+                <option value="proximos" {% if temporalidad == 'proximos' %}selected{% endif %}>Próximos (fecha__gte)</option>
+                <option value="pasados" {% if temporalidad == 'pasados' %}selected{% endif %}>Pasados (fecha__lt)</option>
+            </select>
+        </div>
+
+        <!-- Filtro Organizador -->
+        <div class="col-md-3">
+            <select name="organizador" class="form-select">
+                <option value="">-- Todos los Organizadores --</option>
+                {% for org in organizadores %}
+                    <option value="{{ org.id }}" {% if organizador_id == org.id|stringformat:"i" %}selected{% endif %}>
+                        {{ org.nombre }} ({{ org.cant_org }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="col-md-1 d-grid">
+            <button type="submit" class="btn btn-dark" title="Aplicar filtros">
+                <i class="bi bi-funnel-fill"></i>
+            </button>
+        </div>
+    </form>
+    
+    {% if query or temporalidad or organizador_id %}
+        <div class="mt-2 pt-2 border-top d-flex align-items-center gap-2">
+            <span class="small text-muted">Filtros activos:</span>
+            {% if query %}<span class="badge bg-secondary">Búsqueda: "{{ query }}"</span>{% endif %}
+            {% if temporalidad %}<span class="badge bg-primary">Tiempo: {{ temporalidad }}</span>{% endif %}
+            {% if organizador_id %}<span class="badge bg-info">Organizador ID: {{ organizador_id }}</span>{% endif %}
+            <a href="{% url 'evento_lista' %}" class="small text-danger text-decoration-none ms-auto"><i class="bi bi-x-circle"></i> Limpiar filtros</a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Listado en Cards -->
+<div class="row g-4">
+    {% for evento in eventos %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card card-custom h-100 d-flex flex-column bg-white">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                            <i class="bi bi-geo-alt-fill me-1"></i>{{ evento.ubicacion|truncatechars:20 }}
+                        </span>
+                        {% if evento.es_este_mes %}
+                            <span class="badge bg-success"><i class="bi bi-star-fill me-1"></i>Este mes</span>
+                        {% endif %}
+                    </div>
+
+                    <h5 class="card-title fw-bold text-dark mb-2">
+                        <a href="{% url 'evento_detalle' evento.id %}" class="text-decoration-none text-dark">
+                            {{ evento.titulo }}
+                        </a>
+                    </h5>
+
+                    <p class="card-text text-muted small flex-grow-1">
+                        {{ evento.descripcion|truncatewords:20 }}
+                    </p>
+
+                    <!-- Fechas y Capacidad -->
+                    <div class="bg-light p-2 rounded mb-3 small">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted"><i class="bi bi-calendar-event me-1"></i>Fecha:</span>
+                            <span class="fw-semibold">{{ evento.fecha|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted"><i class="bi bi-person me-1"></i>Organizador:</span>
+                            <span class="fw-semibold">{{ evento.organizador.nombre }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted"><i class="bi bi-people me-1"></i>Inscritos:</span>
+                            <span class="fw-bold text-primary">{{ evento.inscritos_confirmados }} / {{ evento.capacidad }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                        <a href="{% url 'evento_detalle' evento.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>Ver Detalle
+                        </a>
+                        <div class="btn-group">
+                            <a href="{% url 'evento_editar' evento.id %}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'evento_eliminar' evento.id %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="card card-custom p-5 text-center bg-white">
+                <i class="bi bi-calendar-x display-3 text-muted mb-3"></i>
+                <h4>No se encontraron eventos</h4>
+                <p class="text-muted">No existen eventos que coincidan con los criterios de búsqueda seleccionados.</p>
+                <div class="mt-2">
+                    <a href="{% url 'evento_lista' %}" class="btn btn-outline-primary me-2">Ver todos los eventos</a>
+                    <a href="{% url 'evento_crear' %}" class="btn btn-primary">Crear nuevo evento</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+

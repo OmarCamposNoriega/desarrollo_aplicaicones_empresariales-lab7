@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Consultas Avanzadas ORM | Rúbrica Lab 07{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+        <span class="badge bg-warning text-dark px-3 py-1 fw-bold mb-2">EVALUACIÓN DE RÚBRICA</span>
+        <h2 class="fw-bold mb-1"><i class="bi bi-cpu-fill text-primary"></i> Panel de Consultas Avanzadas (Django ORM)</h2>
+        <p class="text-muted mb-0">Demostración práctica de las 5 consultas solicitadas en el laboratorio mediante código ORM y resultados en tiempo real.</p>
+    </div>
+    <div>
+        <a href="#estadisticas" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-bar-chart-fill me-1"></i> Ver Métricas Globales
+        </a>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- CONSULTA 1: CONTEO DE USUARIOS POR EVENTO (annotate + Count) -->
+<!-- ======================================================== -->
+<div class="card card-custom p-4 bg-white mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h4 class="fw-bold text-dark mb-0">
+            <span class="badge bg-primary me-2">1</span> ¿Cuántos usuarios están registrados en un evento específico?
+        </h4>
+        <span class="badge bg-info-subtle text-info border"><code>annotate() + Count('registros')</code></span>
+    </div>
+    <p class="text-muted small">
+        Calcula la cantidad total de participantes registrados en cada evento mediante agregación en el QuerySet.
+    </p>
+
+    <div class="code-snippet mb-3">
+# Django ORM: Anotación y conteo de la relación inversa 'registros'
+eventos_con_conteo = Evento.objects.annotate(
+    total_usuarios=Count('registros')
+).select_related('organizador').order_by('-total_usuarios')
+
+# Para un evento específico:
+total_especifico = evento.registros.count()
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Título del Evento</th>
+                    <th>Organizador</th>
+                    <th>Fecha</th>
+                    <th class="text-center">Capacidad Máxima</th>
+                    <th class="text-center bg-primary-subtle text-primary fw-bold">Total Usuarios Registrados</th>
+                    <th>Estado de Cupo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in eventos_con_conteo %}
+                    <tr>
+                        <td class="fw-bold">#{{ ev.id }}</td>
+                        <td><a href="{% url 'evento_detalle' ev.id %}" class="fw-bold text-decoration-none">{{ ev.titulo }}</a></td>
+                        <td>{{ ev.organizador.nombre }}</td>
+                        <td>{{ ev.fecha|date:"d/m/Y H:i" }}</td>
+                        <td class="text-center">{{ ev.capacidad }}</td>
+                        <td class="text-center bg-primary-subtle fw-bold fs-6 text-primary">{{ ev.total_usuarios }}</td>
+                        <td>
+                            {% if ev.cupos_disponibles > 0 %}
+                                <span class="badge bg-success">{{ ev.cupos_disponibles }} cupos libres</span>
+                            {% else %}
+                                <span class="badge bg-danger">Agotado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- CONSULTA 2: EVENTOS QUE SE LLEVAN A CABO ESTE MES -->
+<!-- ======================================================== -->
+<div class="card card-custom p-4 bg-white mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h4 class="fw-bold text-dark mb-0">
+            <span class="badge bg-primary me-2">2</span> ¿Cuántos eventos se están llevando a cabo este mes?
+        </h4>
+        <span class="badge bg-success-subtle text-success border"><code>filter(fecha__year, fecha__month)</code></span>
+    </div>
+    <p class="text-muted small">
+        Utiliza field lookups temporales para filtrar los eventos correspondientes al año y mes actual (<strong>{{ ahora|date:"F Y" }}</strong>).
+    </p>
+
+    <div class="code-snippet mb-3">
+# Django ORM: Filtrado temporal por año y mes en curso
+ahora = timezone.now()
+eventos_este_mes = Evento.objects.filter(
+    fecha__year=ahora.year,
+    fecha__month=ahora.month
+).order_by('fecha')
+
+total_eventos_este_mes = eventos_este_mes.count()
+    </div>
+
+    <div class="alert alert-success d-flex align-items-center justify-content-between p-3 mb-3">
+        <div>
+            <i class="bi bi-calendar-check-fill fs-4 me-2"></i>
+            <strong>Resultado:</strong> En el mes en curso (<strong>{{ ahora|date:"F de Y" }}</strong>) se llevan a cabo 
+            <span class="badge bg-success fs-6">{{ total_eventos_este_mes }} evento(s)</span>.
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Evento</th>
+                    <th>Fecha y Hora</th>
+                    <th>Ubicación</th>
+                    <th>Organizador</th>
+                    <th class="text-center">Capacidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in eventos_este_mes %}
+                    <tr>
+                        <td class="fw-bold">{{ ev.titulo }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ ev.fecha|date:"l, d/m/Y H:i" }}</span></td>
+                        <td>{{ ev.ubicacion }}</td>
+                        <td>{{ ev.organizador.nombre }}</td>
+                        <td class="text-center">{{ ev.capacidad }} participantes</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="text-center py-3 text-muted">No hay eventos programados para este mes.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- CONSULTA 3: USUARIOS MÁS ACTIVOS EN PARTICIPACIÓN -->
+<!-- ======================================================== -->
+<div class="card card-custom p-4 bg-white mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h4 class="fw-bold text-dark mb-0">
+            <span class="badge bg-primary me-2">3</span> ¿Quiénes son los usuarios más activos en términos de participación?
+        </h4>
+        <span class="badge bg-warning-subtle text-warning-emphasis border"><code>annotate() + order_by('-total')[:5]</code></span>
+    </div>
+    <p class="text-muted small">
+        Clasifica a los usuarios según el número de registros a eventos que poseen en orden descendente.
+    </p>
+
+    <div class="code-snippet mb-3">
+# Django ORM: Anotar cantidad de registros por usuario y ordenar de mayor a menor
+usuarios_mas_activos = Usuario.objects.annotate(
+    total_participaciones=Count('registros')
+).order_by('-total_participaciones')[:5]
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-center" style="width: 80px;">Puesto</th>
+                    <th>Usuario</th>
+                    <th>Correo</th>
+                    <th>Ciudad</th>
+                    <th class="text-center bg-warning-subtle fw-bold">Total Participaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios_mas_activos %}
+                    <tr>
+                        <td class="text-center fw-bold">
+                            {% if forloop.counter == 1 %}<span class="badge bg-warning text-dark">Top 1</span>
+                            {% elif forloop.counter == 2 %}<span class="badge bg-secondary">Top 2</span>
+                            {% elif forloop.counter == 3 %}<span class="badge bg-dark">Top 3</span>
+                            {% else %}#{{ forloop.counter }}{% endif %}
+                        </td>
+                        <td class="fw-bold text-dark">{{ u.nombre }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.ciudad }}</td>
+                        <td class="text-center bg-warning-subtle fw-bold fs-6">{{ u.total_participaciones }} eventos</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- CONSULTA 4: EVENTOS ORGANIZADOS POR CADA USUARIO -->
+<!-- ======================================================== -->
+<div class="card card-custom p-4 bg-white mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h4 class="fw-bold text-dark mb-0">
+            <span class="badge bg-primary me-2">4</span> ¿Cuántos eventos ha organizado un usuario en particular?
+        </h4>
+        <span class="badge bg-primary-subtle text-primary border"><code>annotate(Count('eventos_organizados'))</code></span>
+    </div>
+    <p class="text-muted small">
+        Conteo de eventos creados por cada usuario a través de la relación de clave foránea inversa.
+    </p>
+
+    <div class="code-snippet mb-3">
+# Django ORM: Cantidad de eventos organizados por cada usuario
+usuarios_organizadores = Usuario.objects.annotate(
+    total_organizados=Count('eventos_organizados')
+).filter(total_organizados__gt=0).order_by('-total_organizados')
+
+# O para un usuario en específico:
+total_usuario = usuario.eventos_organizados.count()
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Organizador</th>
+                    <th>Correo Electrónico</th>
+                    <th>Ciudad</th>
+                    <th class="text-center bg-info-subtle fw-bold">Eventos Organizados</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for org in usuarios_organizadores %}
+                    <tr>
+                        <td class="fw-bold text-dark">{{ org.nombre }}</td>
+                        <td>{{ org.email }}</td>
+                        <td>{{ org.ciudad }}</td>
+                        <td class="text-center bg-info-subtle fw-bold fs-6">{{ org.total_organizados }} evento(s)</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="text-center py-3 text-muted">No hay organizadores con eventos creados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- CONSULTA 5: BÚSQUEDAS COMPLEJAS CON Q OBJECTS -->
+<!-- ======================================================== -->
+<div class="card card-custom p-4 bg-white mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h4 class="fw-bold text-dark mb-0">
+            <span class="badge bg-primary me-2">5</span> Consultas Complejas con Q Objects (OR / AND / NOT)
+        </h4>
+        <span class="badge bg-dark text-white border"><code>from django.db.models import Q</code></span>
+    </div>
+    <p class="text-muted small">
+        Permite construir consultas SQL con operadores lógicos avanzados (<code>|</code> para OR, <code>&</code> para AND, <code>~</code> para NOT).
+    </p>
+
+    <div class="code-snippet mb-3">
+# Django ORM: Búsqueda flexible multicriterio con Q Objects
+consulta_q = Evento.objects.filter(
+    (Q(titulo__icontains=q_busqueda) | Q(descripcion__icontains=q_busqueda)) &
+    Q(capacidad__gte=30)
+).distinct()
+    </div>
+
+    <form method="GET" class="row g-2 align-items-center mb-3">
+        <div class="col-md-8">
+            <div class="input-group">
+                <span class="input-group-text bg-light fw-bold">Término de búsqueda:</span>
+                <input type="text" name="q_busqueda" value="{{ q_query }}" class="form-control" placeholder="Ej. Tecsup, Python, Web, Conferencia...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-dark w-100 fw-bold">
+                <i class="bi bi-search me-1"></i> Probar Filtro con Q
+            </button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Ubicación</th>
+                    <th class="text-center">Capacidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in consulta_q %}
+                    <tr>
+                        <td class="fw-bold">{{ ev.titulo }}</td>
+                        <td class="small">{{ ev.descripcion|truncatewords:15 }}</td>
+                        <td>{{ ev.ubicacion }}</td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ ev.capacidad }} personas</span></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="text-center py-3 text-muted">No se encontraron eventos con la condición Q para "{{ q_query }}".</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- CONSULTA 6: AGREGACIONES ESTADÍSTICAS GLOBALES (aggregate) -->
+<!-- ======================================================== -->
+<div id="estadisticas" class="card card-custom p-4 bg-white mb-4">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h4 class="fw-bold text-dark mb-0">
+            <span class="badge bg-primary me-2">6</span> Estadísticas Globales del Sistema con aggregate()
+        </h4>
+        <span class="badge bg-secondary-subtle text-secondary border"><code>aggregate(Avg, Max, Min, Sum, Count)</code></span>
+    </div>
+    <p class="text-muted small">
+        Calcula valores escalares resumen de toda la tabla de eventos directamente en la base de datos SQL.
+    </p>
+
+    <div class="code-snippet mb-3">
+# Django ORM: Agregación estadística en un solo query SQL
+estadisticas = Evento.objects.aggregate(
+    total_eventos=Count('id'),
+    promedio_capacidad=Avg('capacidad'),
+    max_capacidad=Max('capacidad'),
+    min_capacidad=Min('capacidad'),
+    capacidad_total_combinada=Sum('capacidad')
+)
+    </div>
+
+    <div class="row g-3 text-center">
+        <div class="col-md">
+            <div class="p-3 bg-light rounded border">
+                <span class="text-muted small d-block">Total Eventos</span>
+                <span class="fs-4 fw-bold text-dark">{{ estadisticas.total_eventos }}</span>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="p-3 bg-light rounded border">
+                <span class="text-muted small d-block">Promedio Capacidad (Avg)</span>
+                <span class="fs-4 fw-bold text-primary">{{ estadisticas.promedio_capacidad|floatformat:1 }}</span>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="p-3 bg-light rounded border">
+                <span class="text-muted small d-block">Máxima Capacidad (Max)</span>
+                <span class="fs-4 fw-bold text-success">{{ estadisticas.max_capacidad }}</span>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="p-3 bg-light rounded border">
+                <span class="text-muted small d-block">Mínima Capacidad (Min)</span>
+                <span class="fs-4 fw-bold text-danger">{{ estadisticas.min_capacidad }}</span>
+            </div>
+        </div>
+        <div class="col-md">
+            <div class="p-3 bg-light rounded border">
+                <span class="text-muted small d-block">Aforo Total Sumado (Sum)</span>
+                <span class="fs-4 fw-bold text-warning-emphasis">{{ estadisticas.capacidad_total_combinada }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

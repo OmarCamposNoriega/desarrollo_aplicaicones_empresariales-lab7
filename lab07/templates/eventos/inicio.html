@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio | Sistema de Gestión de Eventos (Django ORM){% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+    <div class="col-lg-8">
+        <h1 class="display-6 fw-bold text-dark">
+            <i class="bi bi-calendar2-range text-primary"></i> Sistema de Gestión de Eventos
+        </h1>
+        <p class="lead text-muted mb-0">
+            Caso de estudio integral del <strong>Laboratorio 07: ORM en Django</strong>.
+            Implementación de operaciones CRUD completas y consultas complejas con <code>filter()</code>, <code>exclude()</code>, <code>Q objects</code>, <code>annotate()</code> y <code>aggregate()</code>.
+        </p>
+    </div>
+    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+        <a href="{% url 'consultas_avanzadas' %}" class="btn btn-primary btn-lg shadow-sm">
+            <i class="bi bi-cpu me-2"></i> Ver Consultas ORM
+        </a>
+    </div>
+</div>
+
+<!-- Tarjetas de Métricas (KPIs generados con ORM) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card card-custom p-3 border-start border-primary border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Total Eventos</span>
+                    <h2 class="fw-bold mb-0 text-primary">{{ total_eventos }}</h2>
+                    <small class="text-muted">En base de datos</small>
+                </div>
+                <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
+                    <i class="bi bi-calendar-check fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom p-3 border-start border-success border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Eventos Este Mes</span>
+                    <h2 class="fw-bold mb-0 text-success">{{ eventos_mes }}</h2>
+                    <small class="text-muted"><code>fecha__month</code></small>
+                </div>
+                <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
+                    <i class="bi bi-calendar-heart fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom p-3 border-start border-info border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Usuarios Registrados</span>
+                    <h2 class="fw-bold mb-0 text-info">{{ total_usuarios }}</h2>
+                    <small class="text-muted">Organizadores y asistentes</small>
+                </div>
+                <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info">
+                    <i class="bi bi-people fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom p-3 border-start border-warning border-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Inscripciones</span>
+                    <h2 class="fw-bold mb-0 text-warning">{{ total_registros }}</h2>
+                    <small class="text-muted">Relación <code>RegistroEvento</code></small>
+                </div>
+                <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning">
+                    <i class="bi bi-ticket-detailed fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Próximos Eventos y Accesos Rápidos -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card card-custom h-100 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Próximos Eventos</h4>
+                <a href="{% url 'evento_lista' %}" class="btn btn-outline-primary btn-sm">Ver Catálogo Completo</a>
+            </div>
+            
+            {% if proximos_eventos %}
+                <div class="list-group list-group-flush">
+                    {% for evento in proximos_eventos %}
+                        <div class="list-group-item px-0 py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                            <div>
+                                <h6 class="fw-bold mb-1">
+                                    <a href="{% url 'evento_detalle' evento.id %}" class="text-decoration-none text-dark">
+                                        {{ evento.titulo }}
+                                    </a>
+                                    {% if evento.es_este_mes %}
+                                        <span class="badge bg-success ms-1">Este mes</span>
+                                    {% endif %}
+                                </h6>
+                                <p class="text-muted small mb-1">{{ evento.descripcion|truncatewords:18 }}</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-geo-alt text-danger me-1"></i>{{ evento.ubicacion }} |
+                                    <i class="bi bi-person text-secondary me-1"></i>Org: {{ evento.organizador.nombre }}
+                                </small>
+                            </div>
+                            <div class="text-md-end mt-2 mt-md-0">
+                                <span class="badge bg-light text-dark border p-2 mb-2 d-block">
+                                    <i class="bi bi-calendar3 me-1"></i>{{ evento.fecha|date:"d M Y, H:i" }}
+                                </span>
+                                <a href="{% url 'evento_detalle' evento.id %}" class="btn btn-sm btn-primary">
+                                    Ver Detalle
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-secondary mb-0">No hay eventos próximos registrados.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card card-custom h-100 p-4 bg-white">
+            <h4 class="fw-bold mb-3"><i class="bi bi-lightning-charge text-warning me-2"></i>Acciones Rápidas</h4>
+            <div class="d-grid gap-2 mb-4">
+                <a href="{% url 'evento_crear' %}" class="btn btn-outline-primary text-start py-2">
+                    <i class="bi bi-plus-circle me-2"></i> Registrar Nuevo Evento
+                </a>
+                <a href="{% url 'usuario_crear' %}" class="btn btn-outline-secondary text-start py-2">
+                    <i class="bi bi-person-plus me-2"></i> Registrar Nuevo Usuario
+                </a>
+                <a href="{% url 'registro_crear' %}" class="btn btn-outline-success text-start py-2">
+                    <i class="bi bi-ticket-perforated me-2"></i> Inscribir Usuario a Evento
+                </a>
+                <a href="{% url 'consultas_avanzadas' %}" class="btn btn-outline-warning text-dark text-start py-2">
+                    <i class="bi bi-speedometer2 me-2"></i> Consola de Métricas ORM
+                </a>
+                <a href="{% url 'receta_lista' %}" class="btn btn-outline-info text-dark text-start py-2">
+                    <i class="bi bi-egg-fried me-2"></i> Ir a Actividad 2 (Recetas)
+                </a>
+            </div>
+
+            <div class="bg-light p-3 rounded">
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-shield-check text-success me-1"></i>Criterios Evaluados</h6>
+                <ul class="list-unstyled small text-muted mb-0">
+                    <li><i class="bi bi-check2 text-success me-1"></i> Filtros <code>filter()</code>, <code>exclude()</code>, <code>get()</code></li>
+                    <li><i class="bi bi-check2 text-success me-1"></i> Ordenamiento <code>order_by()</code> y <code>reverse()</code></li>
+                    <li><i class="bi bi-check2 text-success me-1"></i> Consultas complejas con <code>Q objects</code></li>
+                    <li><i class="bi bi-check2 text-success me-1"></i> Agregaciones y anotaciones (<code>annotate</code>, <code>aggregate</code>)</li>
+                    <li><i class="bi bi-check2 text-success me-1"></i> Interfaz web completa con Django Templates</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

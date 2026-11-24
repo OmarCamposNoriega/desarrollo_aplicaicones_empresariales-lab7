@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Actividad 2: Recetas y Autores | Lab 07{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+        <span class="badge bg-info text-dark px-3 py-1 fw-bold mb-2">ACTIVIDAD GUIADA DEL LABORATORIO</span>
+        <h2 class="fw-bold mb-1"><i class="bi bi-egg-fried text-warning"></i> Aplicación de Recetas, Autores y Comentarios</h2>
+        <p class="text-muted mb-0">Demostración en interfaz web de los modelos y comandos ejecutados por consola en la Actividad 2.</p>
+    </div>
+    <div>
+        <a href="/admin/recetas/" target="_blank" class="btn btn-outline-dark btn-sm">
+            <i class="bi bi-shield-lock me-1"></i> Ver en Django Admin
+        </a>
+    </div>
+</div>
+
+<!-- Autores Registrados -->
+<div class="card card-custom p-4 bg-white mb-4">
+    <h4 class="fw-bold text-dark mb-3"><i class="bi bi-person-fill-check text-primary me-2"></i>1. Autores Registrados</h4>
+    <div class="row g-3">
+        {% for a in autores %}
+            <div class="col-md-6">
+                <div class="p-3 bg-light rounded border">
+                    <h5 class="fw-bold mb-1">{{ a.nombre }}</h5>
+                    <p class="text-muted mb-1 small"><i class="bi bi-envelope me-1"></i>{{ a.email }}</p>
+                    <span class="badge bg-primary">{{ a.recetas.count }} Receta(s) publicadas</span>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12"><div class="alert alert-secondary">No hay autores en la base de datos.</div></div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Recetas y sus Comentarios -->
+<div class="card card-custom p-4 bg-white mb-4">
+    <h4 class="fw-bold text-dark mb-3"><i class="bi bi-book-half text-success me-2"></i>2. Recetas Creadas y Comentarios Asociados</h4>
+    <div class="row g-4">
+        {% for r in recetas %}
+            <div class="col-md-6">
+                <div class="card h-100 border p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="fw-bold text-dark mb-0">{{ r.titulo }}</h5>
+                        <span class="badge bg-secondary">ID #{{ r.id }}</span>
+                    </div>
+                    <p class="small text-muted mb-2">
+                        <i class="bi bi-person me-1"></i><strong>Autor:</strong> {{ r.autor.nombre }} ({{ r.autor.email }}) |
+                        <i class="bi bi-clock me-1"></i>{{ r.tiempo_registro|date:"d/m/Y H:i" }}
+                    </p>
+                    <div class="mb-2">
+                        <strong>Ingredientes:</strong>
+                        <p class="small text-secondary mb-1">{{ r.ingredientes }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Preparación:</strong>
+                        <p class="small text-secondary mb-1">{{ r.preparacion }}</p>
+                    </div>
+                    <hr class="my-2">
+                    <h6 class="fw-bold small text-dark mb-2">
+                        <i class="bi bi-chat-left-dots text-primary me-1"></i>Comentarios ({{ r.comentarios.count }}):
+                    </h6>
+                    {% for c in r.comentarios.all %}
+                        <div class="alert alert-light border py-1 px-2 mb-1 small">
+                            <i class="bi bi-quote text-muted me-1"></i>{{ c.texto }}
+                        </div>
+                    {% empty %}
+                        <div class="small text-muted fst-italic">Sin comentarios aún.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12"><div class="alert alert-secondary">No hay recetas cargadas en el sistema.</div></div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Consultas ORM Demostradas en la Guía -->
+<div class="card card-custom p-4 bg-white">
+    <h4 class="fw-bold text-dark mb-3"><i class="bi bi-terminal-fill text-dark me-2"></i>3. Verificación de Filtros ORM de la Guía Oficial</h4>
+    
+    <div class="row g-3">
+        <!-- exclude -->
+        <div class="col-md-4">
+            <div class="p-3 bg-light rounded border h-100">
+                <h6 class="fw-bold text-primary mb-1">exclude(ingredientes__startswith='A')</h6>
+                <p class="small text-muted mb-2">Recetas cuyos ingredientes NO empiezan con 'A':</p>
+                <ul class="small mb-0 ps-3">
+                    {% for r in recetas_no_a %}
+                        <li><strong>{{ r.titulo }}</strong> ({{ r.ingredientes }})</li>
+                    {% empty %}
+                        <li class="text-muted">Ninguna coincide.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- filter contains tetera -->
+        <div class="col-md-4">
+            <div class="p-3 bg-light rounded border h-100">
+                <h6 class="fw-bold text-success mb-1">filter(preparacion__contains='tetera')</h6>
+                <p class="small text-muted mb-2">Recetas que mencionan "tetera" en su preparación:</p>
+                <ul class="small mb-0 ps-3">
+                    {% for r in recetas_tetera %}
+                        <li><strong>{{ r.titulo }}</strong>: {{ r.preparacion }}</li>
+                    {% empty %}
+                        <li class="text-muted">Ninguna coincide.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- order_by titulo -->
+        <div class="col-md-4">
+            <div class="p-3 bg-light rounded border h-100">
+                <h6 class="fw-bold text-warning-emphasis mb-1">order_by('titulo')</h6>
+                <p class="small text-muted mb-2">Ordenamiento alfabético por título:</p>
+                <ol class="small mb-0 ps-3">
+                    {% for r in recetas_ordenadas %}
+                        <li>{{ r.titulo }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

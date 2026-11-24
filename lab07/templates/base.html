@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Gestión de Eventos | Lab 07 ORM Django{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --tecsup-blue: #0072ce;
+            --tecsup-dark: #0f172a;
+            --tecsup-light: #f8fafc;
+        }
+        body {
+            background-color: #f1f5f9;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar-tecsup {
+            background: linear-gradient(135deg, #005696 0%, #0072ce 100%);
+            box-shadow: 0 4px 12px rgba(0, 114, 206, 0.2);
+        }
+        .nav-link {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9) !important;
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #ffffff !important;
+            transform: translateY(-1px);
+        }
+        .badge-orm {
+            background-color: #f59e0b;
+            color: #1e293b;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 9999px;
+        }
+        .card-custom {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .code-snippet {
+            background: #1e293b;
+            color: #38bdf8;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: Consolas, monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        footer {
+            margin-top: auto;
+            background: #0f172a;
+            color: #94a3b8;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Barra de Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-tecsup sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'inicio' %}">
+                <i class="bi bi-calendar-event-fill fs-4 text-warning"></i>
+                <span>EventHub <span class="badge bg-white text-primary fs-6">Lab 07</span></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inicio' %}">
+                            <i class="bi bi-house-door me-1"></i> Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'evento_lista' %}">
+                            <i class="bi bi-calendar3 me-1"></i> Eventos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'usuario_lista' %}">
+                            <i class="bi bi-people me-1"></i> Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'registro_lista' %}">
+                            <i class="bi bi-ticket-perforated me-1"></i> Registros
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'consultas_avanzadas' %}">
+                            <i class="bi bi-cpu-fill text-warning me-1"></i> Consultas ORM
+                            <span class="badge-orm">Rúbrica</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-journal-text me-1"></i> Más
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'receta_lista' %}"><i class="bi bi-egg-fried me-2"></i>Actividad 2: Recetas</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/admin/" target="_blank"><i class="bi bi-shield-lock me-2"></i>Django Admin</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{% url 'evento_crear' %}" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm">
+                        <i class="bi bi-plus-circle me-1"></i> Nuevo Evento
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mensajes Flash de Django -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Contenido Principal -->
+    <main class="container my-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 border-top">
+        <div class="container text-center">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-md-start mb-2 mb-md-0">
+                    <span class="fw-bold text-white">TECSUP — Ciclo IV</span> | Desarrollo de Aplicaciones Web
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="badge bg-secondary">Laboratorio 07: ORM en Django</span>
+                    <span class="badge bg-primary ms-1">SQLite3</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
