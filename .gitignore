@@ -1,0 +1,33 @@
+# Entornos virtuales
+venv/
+env/
+.venv/
+ENV/
+
+# Python cache y compilados
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Base de datos local
+db.sqlite3
+db.sqlite3-journal
+
+# Documentos locales y trabajo extra (repositorio independiente)
+semana7-trabajo-extra/
+*.docx
+~$*
+*.tmp
+readme-omar.md
+GUION_VIDEO_EXPOSICION.md
+INFORME_Y_RESPUESTAS_LAB07.md
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+Desktop.ini
+.DS_Store
